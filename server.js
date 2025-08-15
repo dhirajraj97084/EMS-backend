@@ -36,9 +36,10 @@ mongoose.connect(mongoUri, {
 .catch(err => console.error('MongoDB connection error:', err));
 
 // Routes
-app.use('/',(req,res)=>{
-  res.send("welcome to ems backend api");
-})
+app.get("/", (req, res) => {
+  res.send("Backend is running 🚀");
+});
+
 app.use('/api/auth', authRoutes);
 app.use('/api/employees', employeeRoutes);
 app.use('/api/dashboard', dashboardRoutes);
