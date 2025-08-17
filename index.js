@@ -7,7 +7,7 @@ const authRoutes = require('./routes/auth');
 const employeeRoutes = require('./routes/employees');
 const dashboardRoutes = require('./routes/dashboard');
 
-// Load environment variables from config.env
+// Load environment variables from config.env or Vercel environment
 dotenv.config({ path: path.join(__dirname, 'config.env') });
 
 const app = express();
@@ -20,7 +20,12 @@ console.log('MONGODB_URI:', process.env.MONGODB_URI ? '***loaded***' : 'NOT LOAD
 console.log('NODE_ENV:', process.env.NODE_ENV);
 
 // Middleware
-app.use(cors());
+app.use(cors({
+  origin: process.env.NODE_ENV === 'production' 
+    ? ['https://your-frontend-domain.vercel.app', 'https://your-frontend-domain.vercel.app'] 
+    : true,
+  credentials: true
+}));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
@@ -67,6 +72,13 @@ app.use('*', (req, res) => {
   });
 });
 
-app.listen(PORT, () => {
-  console.log(`Server is running on port ${PORT}`);
-});
+// For Vercel serverless functions
+if (process.env.NODE_ENV === 'production') {
+  // Export for Vercel
+  module.exports = app;
+} else {
+  // Local development
+  app.listen(PORT, () => {
+    console.log(`Server is running on port ${PORT}`);
+  });
+}
