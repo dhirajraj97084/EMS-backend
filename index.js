@@ -20,12 +20,30 @@ console.log('MONGODB_URI:', process.env.MONGODB_URI ? '***loaded***' : 'NOT LOAD
 console.log('NODE_ENV:', process.env.NODE_ENV);
 
 // Middleware
+const isProduction = process.env.NODE_ENV === 'production'
+
+// Allow configurable CORS origins in production via CORS_ORIGIN env (comma-separated)
+const configuredCorsOrigins = (process.env.CORS_ORIGIN || '')
+  .split(',')
+  .map(origin => origin.trim())
+  .filter(Boolean)
+
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? ['https://your-frontend-domain.vercel.app', 'https://your-frontend-domain.vercel.app'] 
+  origin: isProduction
+    ? function (origin, callback) {
+        // Allow non-browser/server-to-server requests
+        if (!origin) return callback(null, true)
+
+        // If no CORS_ORIGIN is configured, allow all to avoid accidental lockout
+        if (configuredCorsOrigins.length === 0) return callback(null, true)
+
+        if (configuredCorsOrigins.includes(origin)) return callback(null, true)
+        return callback(new Error('Not allowed by CORS'))
+      }
     : true,
-  credentials: true
-}));
+  credentials: true,
+  allowedHeaders: ['Content-Type', 'Authorization']
+}))
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 
